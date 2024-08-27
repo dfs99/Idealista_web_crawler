@@ -46,21 +46,6 @@ class ProxyFinder:
                     self.logger.error(f"[KO] Proxy: {proxy['proxy']}")
         return available_proxies
     
-if __name__ == '__main__':
-    # para hacer pruebas.
-    # logger configuration
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    logger = logging.getLogger(__name__)
-    _NUM_PROXIES_TO_USE = 15
-    _DIR_STORE_PROXY_LIST = "data/raw/proxies/"
-    proxy_finder = ProxyFinder(
-        url = "https://api.proxyscrape.com/v3/free-proxy-list/get?request=displayproxies&protocol=http&proxy_format=protocolipport&format=json&timeout=5215",
-        test_url="http://ipinfo.io/json",
-        path=_DIR_STORE_PROXY_LIST,
-        logger=logger
-    )
-
-    print(proxy_finder.validate_proxies(_NUM_PROXIES_TO_USE))
 
 
 
