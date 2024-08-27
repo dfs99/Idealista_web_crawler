@@ -1,0 +1,10 @@
+# venv.
+venv/
+__pycache__/
+
+# git.
+.git/
+
+# it contains private links to be extracted.
+urls.log
+data/
