@@ -148,8 +148,8 @@ if __name__ == "__main__":
                         logger.info(f"[OK] Property: {property.id} added successfully to _Results")
                     else:
                         logger.error(f"[KO] Url property failed: {property.url}")
-                    break 
-            break 
+                     
+ 
         
     except Exception as err:
         logger.info(f"An error has been risen. Storing already extracted data.")
