@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Dict, Generator
-from utils.properties.property import PropertyData
+from src.properties.property import PropertyData
 
 @dataclass
 class PropertyStorage:

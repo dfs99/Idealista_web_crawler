@@ -7,9 +7,9 @@ import json
 import requests 
 import itertools
 from pathlib import Path
-from utils.request_metadata import RequestsMetadata
-from utils.properties.property import PropertyData
-from utils.properties.property_storage import PropertyStorage
+from src.request_metadata import RequestsMetadata
+from src.properties.property import PropertyData
+from src.properties.property_storage import PropertyStorage
 from tenacity import retry, stop_after_attempt
 
 
