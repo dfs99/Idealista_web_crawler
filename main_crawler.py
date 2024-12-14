@@ -1,6 +1,6 @@
-from utils.webcrawler import IdealistaWebCrawler
-from utils.functions import get_name, get_name_property, data_json_to_csv_file
-from utils.request_metadata import RequestsMetadata
+from src.webcrawler import IdealistaWebCrawler
+from src.functions import get_name, get_name_property, data_json_to_csv_file
+from src.request_metadata import RequestsMetadata
 from typing import Set, List, Dict
 import json
 from datetime import datetime
@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 import os
 import itertools
 from pathlib import Path
-from utils.proxy_finder import ProxyFinder
+from src.proxy_finder import ProxyFinder
 
 
 # logger configuration
