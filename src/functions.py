@@ -5,6 +5,14 @@ The following file only contains general purpose functions for the program
 import json
 import os 
 import pandas as pd 
+import logging
+from logging import Logger 
+
+def create_logger() -> Logger:
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    return logging.getLogger(__name__)
+
+
 
 def get_name(url: str) -> str:
 
@@ -49,7 +57,7 @@ def data_json_to_csv_file(json_path, output_path):
     data = None
 
     # fetch raw json data.
-    with open(json_path, "r") as file:
+    with open(json_path, "r", encoding='utf-8') as file:
         data = json.load(file)
     
     # for each property.

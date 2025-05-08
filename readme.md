@@ -44,7 +44,7 @@ This setup is essential because the first page can sometimes be targeted with an
 
 To run the crawler, execute the following command in your terminal:
 ``` 
-python main_crawler.py
+python main.py
 ```
 
 ## 3-. Expected output in csv:

@@ -8,3 +8,6 @@ __pycache__/
 # it contains private links to be extracted.
 urls.log
 data/
+
+# for launching debugger
+.vscode/
