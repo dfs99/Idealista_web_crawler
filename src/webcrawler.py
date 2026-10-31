@@ -1,5 +1,5 @@
 import os
-from typing import Set, ClassVar
+from typing import Set, ClassVar, Optional
 from pydantic import HttpUrl
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -76,7 +76,7 @@ class IdealistaWebCrawler:
         pagination = self._soup.find("div", class_='pagination')
         if pagination is not None:
             return {self._core_url + link.get('href') for link in pagination.find_all('a')}
-        return {}
+        return set()
     
 
     def get_property_data(self):
@@ -168,6 +168,7 @@ class IdealistaWebCrawler:
         IdealistaWebCrawler.HEADERS["User-Agent"] = next(IdealistaWebCrawler.REQUEST_METADATA.user_agents)
         IdealistaWebCrawler.REQUEST_METADATA.curr_proxy = next(IdealistaWebCrawler.REQUEST_METADATA.proxies)
 
+
     @retry(stop=stop_after_attempt(5))
     def get_source_data(self, url, output_path, name) -> str | None:
         # actualizamos los header y proxies antes de ejecutar de nuevo la request.
@@ -190,3 +191,21 @@ class IdealistaWebCrawler:
                 self.logger.error(f"Error {type(err)} trying to extract: {url}")
                 return None
             
+
+    def get_source_data_no_proxy(self, url, output_path, name) -> Optional[str]:
+        IdealistaWebCrawler.HEADERS["User-Agent"] = next(IdealistaWebCrawler.REQUEST_METADATA.user_agents)
+
+        with requests.Session() as session:
+            try:
+                name = f"{datetime.now().strftime('%Y%m%d')}_{name}"
+                response = session.get(url, headers=IdealistaWebCrawler.HEADERS)
+                # raise HTTPError por bad requests.
+                response.raise_for_status()
+                target_path = os.path.join(output_path, f"{name}.html")
+                with open(target_path, "w", encoding='utf-8') as file:
+                    file.write(response.text)
+                self.logger.info(f"{name} saved successfully")
+                return target_path
+            except Exception as err:
+                self.logger.error(f"Error {type(err)} trying to extract: {url}")
+                return None

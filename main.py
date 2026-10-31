@@ -1,24 +1,26 @@
 from src.webcrawler import IdealistaWebCrawler
-from src.functions import get_name, get_name_property, data_json_to_csv_file
+from src.functions import (
+    get_name, get_name_property, data_json_to_csv_file,
+    create_logger
+)
 from src.request_metadata import RequestsMetadata
 from typing import Set, List, Dict
 import json
 from datetime import datetime
 import time 
-import logging
 from dotenv import load_dotenv
 import os
 import itertools
 from pathlib import Path
 from src.proxy_finder import ProxyFinder
+from src.user_agents import _MY_USER_AGENT_LIST
 
-
-# logger configuration
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
 
 # environment variables setup and loaded.
 load_dotenv()
+
+# add logger.
+logger = create_logger()
 
 # get data from env vars.
 _SET_TO_EXTRACT: Set[str]        = set(os.getenv("INITIAL_URLS").split(","))
@@ -43,30 +45,21 @@ _MY_PROXY_LIST: List[str] = []
 _RESULTS: List[Dict] = []
 
 
-_MY_USER_AGENT_LIST = [
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15",
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:90.0) Gecko/20100101 Firefox/90.0",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15",
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0",
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.2 Safari/605.1.15",
-    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36",
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36"
-]
+
 
 if __name__ == "__main__":
+
     logger.info("---------- Job started ----------")
     logger.info("Start checking input parameters through `.env` file")
 
+    
     # First off, check if directory is valid.
     if not os.path.exists(_RESULTS_PATH):
         raise FileNotFoundError(f"Directory output is not defined: {_RESULTS_PATH}")
     
     # Check if the extension is `json`
     if _RESULTS_FILENAME_EXTENSION != "json":
-        raise ValueError(f"Up to now, only `json` is valid for output filename extensions.") 
+        raise ValueError(f"Only `json` is valid for output filename extensions.") 
 
     # Since the path is valid, create the output file name.
     OUTPUT_FULLPATH_NAME = os.path.join(_RESULTS_PATH, f"{_RESULTS_FILENAME}_{datetime.now().strftime('%Y-%m-%d')}.{_RESULTS_FILENAME_EXTENSION}")
@@ -78,21 +71,22 @@ if __name__ == "__main__":
     for target_url in _SET_TO_EXTRACT:
         logger.info(f"-> {target_url}")
 
-    logger.info("Getting the free proxy list to extract the information.")
-    proxy_finder = ProxyFinder(
-        url = _URL_PROXIES,
-        test_url=_URL_TEST_PROXIES,
-        path=_DIR_STORE_PROXY_LIST,
-        logger=logger
-    )
-    _MY_PROXY_LIST = proxy_finder.validate_proxies(_NUM_PROXIES_TO_USE)
-    logger.info("Proxies extracted correctly.")
+    # TODO: Proxy finder commented
+    # logger.info("Getting the free proxy list to extract the information.")
+    # proxy_finder = ProxyFinder(
+    #     url = _URL_PROXIES,
+    #     test_url=_URL_TEST_PROXIES,
+    #     path=_DIR_STORE_PROXY_LIST,
+    #     logger=logger
+    # )
+    # _MY_PROXY_LIST = proxy_finder.validate_proxies(_NUM_PROXIES_TO_USE)
+    # logger.info("Proxies extracted correctly.")
 
     # inicio del script.
     start_t = time.time()
 
     request_metadata = RequestsMetadata(
-        proxies=itertools.cycle(_MY_PROXY_LIST),
+        proxies=None, #itertools.cycle(_MY_PROXY_LIST),
         curr_proxy=None,
         user_agents= itertools.cycle(_MY_USER_AGENT_LIST),
         odir_pages=_DIR_RAW_PAGES,
@@ -112,7 +106,9 @@ if __name__ == "__main__":
             crawler.initial_url = target_url
 
             # extraer la información de la página. Nota. Tiene política de retries.         
-            data_path = crawler.get_source_data(target_url, IdealistaWebCrawler.REQUEST_METADATA.odir_pages, get_name(target_url))
+            # old version with proxies.
+            #data_path = crawler.get_source_data(target_url, IdealistaWebCrawler.REQUEST_METADATA.odir_pages, get_name(target_url))
+            data_path = crawler.get_source_data_no_proxy(target_url, IdealistaWebCrawler.REQUEST_METADATA.odir_pages, get_name(target_url))
             # si nos devuelve el path en donde hemos almacenado la información.
             if data_path is not None: 
                 # no hubo problema, lo añadimos para trackear.
@@ -124,7 +120,7 @@ if __name__ == "__main__":
                 if crawler.is_pagination:
                     
                     next_links: Set[str] = crawler.get_next_urls()
-
+                    print(next_links, type(next_links))
                     # sacamos los nuevos enlaces a seguir explorando.
                     for new_url in next_links.difference(_SET_ALREADY_EXTRACTED):
                         logger.info(f"New url to be crawled: {new_url}")
@@ -136,7 +132,8 @@ if __name__ == "__main__":
                 for property in crawler.storage.retrieve():
                     # extraemos la información de las propiedades de la página. Tiene retries.
                     #logger.info(f"property id to be extracted: {property.id}")
-                    data_path = crawler.get_source_data(property.url, IdealistaWebCrawler.REQUEST_METADATA.odir_properties, get_name_property(property.url))
+                    #data_path = crawler.get_source_data(property.url, IdealistaWebCrawler.REQUEST_METADATA.odir_properties, get_name_property(property.url))
+                    data_path = crawler.get_source_data_no_proxy(property.url, IdealistaWebCrawler.REQUEST_METADATA.odir_properties, get_name_property(property.url))
                     # si hemos obtenido la información.
                     if data_path is not None:
                         # actualizamos el soup.
